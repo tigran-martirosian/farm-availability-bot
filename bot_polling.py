@@ -17,7 +17,7 @@ from telegram.ext import (
 )
 
 # --- scraper (shop_notifier.py) ---
-from shop_notifier import fetch, parse_catalog, build_message, SHOP_URL, SHOP_NAME
+from shop_notifier import read_catalog, build_message, SHOP_URL, SHOP_NAME
 import stock_watch
 
 logging.basicConfig(
@@ -55,8 +55,7 @@ def save_schedules(d: Dict[str, str]) -> None:
 
 # ---------- report ----------
 def build_report() -> str:
-    html = fetch(SHOP)
-    in_stock, out_stock = parse_catalog(html, SHOP)
+    in_stock, out_stock = read_catalog(SHOP)
     return build_message(in_stock, out_stock, SHOP)
 
 # ---------- time utils (server local tz) ----------
@@ -258,8 +257,7 @@ async def watches_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def poll_stock_job(context: ContextTypes.DEFAULT_TYPE):
     """Read the catalog, alert watching chats about changes, then store the new state."""
     try:
-        html = await asyncio.to_thread(fetch, SHOP)
-        in_stock, out_stock = parse_catalog(html, SHOP)
+        in_stock, out_stock = await asyncio.to_thread(read_catalog, SHOP)
     except Exception as e:
         log.error("Stock poll failed: %s", e)
         return
