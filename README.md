@@ -14,7 +14,7 @@ The bot reads the shop's catalog page and marks each product as in stock or out 
 
 `/watch <product>` adds a product to a chat's watch list. The bot re-reads the catalog every 15 minutes and messages the chat when a watched product comes back, sells out, appears or is removed. A product is identified by its name, so a renamed product shows up as one removed and one new.
 
-It never sends the same alert twice, also after a restart, because the last stock state and the last alert per chat are saved to a file. A failed catalog read or Telegram send is logged and skipped, not retried.
+It never sends the same alert twice, even after a restart, because the last stock state and the last alert per chat are saved to a file. A failed catalog read or Telegram send is logged and skipped, not retried.
 
 ## Files
 
