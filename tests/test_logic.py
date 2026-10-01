@@ -9,6 +9,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 
 import bot_polling
+import shop_notifier
 from shop_notifier import build_message, card_has_buy_button, card_is_oos, parse_catalog
 
 HTML = """
@@ -28,6 +29,18 @@ def test_parse_catalog_splits_stock_and_dedupes():
     assert [p["name"] for p in in_stock] == ["Product A"]
     assert in_stock[0]["url"] == "https://example-farm.test/p/a"
     assert [p["name"] for p in out_stock] == ["Product B"]
+
+def test_read_catalog_follows_next_page_links(monkeypatch):
+    shop = "https://example-farm.test/shop/"
+    page_two = HTML.replace("Product B", "Product C")  # Product A again, plus a new one
+    pages = {
+        shop: HTML + '<a class="next page-numbers" href="/shop/page/2/">→</a>',
+        shop + "page/2/": page_two,
+    }
+    monkeypatch.setattr(shop_notifier, "fetch", lambda url: pages[url])
+    in_stock, out_stock = shop_notifier.read_catalog(shop)
+    assert [p["name"] for p in in_stock] == ["Product A"]
+    assert [p["name"] for p in out_stock] == ["Product B", "Product C"]
 
 def test_parse_hhmm():
     assert bot_polling.parse_hhmm("8:30") == (8, 30)

@@ -10,17 +10,17 @@ A report from October 2025, when the bot was running. I replaced the farm's name
 
 ## How the alerts work
 
-The bot reads the shop's catalog page and marks each product as in stock or out of stock. It sends that to Telegram as a stock report, on request or at a daily time each chat sets.
+The bot reads the shop's catalog, following its "next page" links, and marks each product as in stock or out of stock. It sends that to Telegram as a stock report, on request or at a daily time each chat sets.
 
 `/watch <product>` adds a product to a chat's watch list. The bot re-reads the catalog every 15 minutes and messages the chat when a watched product comes back, sells out, appears or is removed. A product is identified by its name, so a renamed product shows up as one removed and one new.
 
-It never sends the same alert twice, even after a restart, because the last stock state and the last alert per chat are saved to a file. A failed catalog read or Telegram send is logged and skipped, not retried.
+An alert isn't repeated, even after a restart, because the last stock state and the last alert per chat are saved to a file. A failed catalog read or Telegram send is logged and skipped, not retried.
 
 ## Files
 
 Python, BeautifulSoup and `python-telegram-bot`.
 
-- `shop_notifier.py` fetches and parses the page and formats the report.
+- `shop_notifier.py` fetches and parses the catalog pages and formats the report.
 - `bot_polling.py` is the bot: commands, daily reports and the repeating stock check.
 - `stock_watch.py` compares two catalog reads and decides which alerts are new. Start with this one. The alert logic is all here, in about 120 lines.
 

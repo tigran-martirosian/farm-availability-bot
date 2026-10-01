@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 SHOP_URL  = os.getenv("SHOP_URL", "https://example-farm.test/shop/")
 SHOP_NAME = os.getenv("SHOP_NAME", "Example Farm")
 TIMEOUT   = int(os.getenv("TIMEOUT", "20"))
+MAX_PAGES = 10  # stop following "next" links after this many catalog pages
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID   = os.getenv("TELEGRAM_CHAT_ID")
 
@@ -109,6 +110,29 @@ def parse_catalog(html_text: str, base_url: str):
 
     return in_list, oos_list
 
+def next_page_url(html_text: str, base_url: str):
+    """Link to the next catalog page (WooCommerce pagination), or None on the last page."""
+    a = BeautifulSoup(html_text, "html.parser").select_one("a.next.page-numbers[href]")
+    return normalize_url(base_url, a["href"]) if a else None
+
+def read_catalog(url: str):
+    """Fetch every catalog page, following the "next" link, and merge the lists."""
+    in_list, oos_list = [], []
+    seen = set()
+    for _ in range(MAX_PAGES):
+        html = fetch(url)
+        page_in, page_oos = parse_catalog(html, url)
+        for p in page_in + page_oos:
+            key = p["name"].strip().lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            (in_list if p["in_stock"] else oos_list).append(p)
+        url = next_page_url(html, url)
+        if not url:
+            break
+    return in_list, oos_list
+
 def escape_md(text: str) -> str:
     """Escape characters that are special in Telegram's legacy Markdown."""
     return re.sub(r"([_*`\[])", lambda m: "\\" + m.group(1), text)
@@ -152,8 +176,7 @@ def telegram_send(text: str):
 def main():
     if not BOT_TOKEN or not CHAT_ID:
         raise SystemExit("Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID (see .env.example).")
-    html = fetch(SHOP_URL)                # only the catalog page
-    in_stock, out_stock = parse_catalog(html, SHOP_URL)
+    in_stock, out_stock = read_catalog(SHOP_URL)   # only the catalog pages
     msg = build_message(in_stock, out_stock, SHOP_URL)
     print(msg)
     telegram_send(msg)
