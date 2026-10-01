@@ -1,0 +1,10 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+schedules.json
+*.log
+stock_state.json
+watches.json
