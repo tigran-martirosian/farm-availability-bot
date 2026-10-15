@@ -41,3 +41,7 @@ pytest                           # the tests
 ```
 
 The tests use sample HTML and temporary files and make no network calls. They cover the parsing, each kind of stock change, and that alerts aren't repeated.
+
+## License
+
+See [LICENSE](LICENSE).
